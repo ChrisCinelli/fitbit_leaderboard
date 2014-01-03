@@ -40,3 +40,4 @@ nosetests.xml
 
 # Vim swap files
 *.swp
+/nbproject/private/
