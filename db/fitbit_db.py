@@ -2,6 +2,7 @@ import sqlite3
 from datetime import date, timedelta
 
 TABLE_PREFIX = "fitbit_lb_"
+DEBUG = True
 
 class fitbit_db:
 
@@ -9,12 +10,21 @@ class fitbit_db:
 		self.db_name = db_name
 		self.db      = sqlite3.connect(db_name)
 
+	def execute (self, query, param = ()):
+		if DEBUG:
+		    print query, param
+		res = self.db.execute(query, param)
+		if DEBUG:
+		    print res
+		return res
+
+
 	# Save the temporary oauth secret in the database
 	def store_oauth_secret (self, key, secret):
 		q = """INSERT INTO {0}fitbit_oauth
 		       VALUES(NULL, ?, ?, NULL)
 		    """.format(TABLE_PREFIX)
-		self.db.execute(q, ((key, secret)))
+		self.execute(q, ((key, secret)))
 		self.db.commit()
 
 	# Retreive the temporary secret that is associated with a given token
@@ -24,7 +34,7 @@ class fitbit_db:
 		       FROM {0}fitbit_oauth
 		       WHERE oauth_token = ?
 		    """.format(TABLE_PREFIX)
-		cur = self.db.execute(q, (token,))
+		cur = self.execute(q, (token,))
 		row = cur.fetchone()
 		if not row:
 			print "Nothing retreived"
@@ -41,12 +51,12 @@ class fitbit_db:
 			       SET fitbit_user_key=?, fitbit_user_secret=?
 			       WHERE id=?
 			    """.format(TABLE_PREFIX)
-			self.db.execute(q, ((key, secret, user_id)))
+			self.execute(q, ((key, secret, user_id)))
 		else:
 			q = """INSERT INTO {0}users
 			       VALUES(NULL, ?, ?, ?)
 			    """.format(TABLE_PREFIX)
-			cur = self.db.execute(q, ((fitbit_id, key, secret)))
+			cur = self.execute(q, ((fitbit_id, key, secret)))
 			user_id = cur.lastrowid
 
 		self.add_meta(user_id, meta)
@@ -61,7 +71,7 @@ class fitbit_db:
 		       FROM {0}user_meta
 		       WHERE user_id=?
 		    """.format(TABLE_PREFIX)
-		cur = self.db.execute(q, (user_id,))
+		cur = self.execute(q, (user_id,))
 		row = cur.fetchone()
 
 		if row:
@@ -77,7 +87,7 @@ class fitbit_db:
 			       full_name=?, avatar=?
 			       WHERE id=?
 			    """.format(TABLE_PREFIX)
-			self.db.execute(q, m)
+			self.execute(q, m)
 		else:
 			m = (user_id,
 				 meta.setdefault('username'),
@@ -89,7 +99,7 @@ class fitbit_db:
 			q = """INSERT INTO {0}user_meta
 			       VALUES(NULL, ?, ?, ?, ?, ?, ?)
 			    """.format(TABLE_PREFIX)
-			self.db.execute(q, m)
+			self.execute(q, m)
 
 		self.db.commit()
 
@@ -99,7 +109,7 @@ class fitbit_db:
 		q = """SELECT id FROM {0}users
 		       WHERE fitbit_id = ?
 		    """.format(TABLE_PREFIX)
-		cur = self.db.execute(q, (fitbit_id,))
+		cur = self.execute(q, (fitbit_id,))
 		row = cur.fetchone()
 		if row:
 			return row[0]
@@ -114,7 +124,7 @@ class fitbit_db:
 	def get_users (self):
 		q = """SELECT * FROM {0}users
 		    """.format(TABLE_PREFIX)
-		cur = self.db.execute(q)
+		cur = self.execute(q)
 		rows = cur.fetchall()
 		users = [dict(id=row[0],
 				fitbit_id=row[1],
@@ -128,7 +138,7 @@ class fitbit_db:
 		q = """INSERT OR REPLACE INTO {0}steps
 		       VALUES(NULL, ?, ?, ?)
 		    """.format(TABLE_PREFIX)
-		self.db.execute(q, (user_id, day, steps))
+		self.execute(q, (user_id, day, steps))
 		self.db.commit()
 
 	# Get a week's worth of data from the database
@@ -144,7 +154,7 @@ class fitbit_db:
 		       WHERE s.day>?
 		       ORDER BY s.day ASC
 		""".format(TABLE_PREFIX)
-		ret = self.db.execute(q, (week,))
+		ret = self.execute(q, (week,))
 		week_data = ret.fetchall()
 		return week_data
 
@@ -155,7 +165,7 @@ class fitbit_db:
 		       nickname, full_name, avatar
 		       FROM {0}user_meta
 		    """.format(TABLE_PREFIX)
-		cur = self.db.execute(q)
+		cur = self.execute(q)
 		raw = cur.fetchall()
 		meta = {}
 		for u in raw:
