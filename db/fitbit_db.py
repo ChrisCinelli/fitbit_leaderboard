@@ -1,8 +1,15 @@
 import sqlite3
-from datetime import date, timedelta
+from datetime import datetime, date, timedelta
+import pytz
 
 TABLE_PREFIX = "fitbit_lb_"
 DEBUG = True
+
+localtz = pytz.timezone('America/Los_Angeles')
+utctz   = pytz.timezone('UTC')
+now     = utctz.localize(datetime.now())
+now_here=now.astimezone(localtz)
+
 
 class fitbit_db:
 
@@ -143,7 +150,7 @@ class fitbit_db:
 
 	# Get a week's worth of data from the database
 	def get_week (self):
-		week = date.today()-timedelta(days=7)
+		week = now_here-timedelta(days=7)
 
 		q = """SELECT um.user_id, um.display_name, s.day, s.steps, um.avatar
 		       FROM {0}users as u

@@ -3,7 +3,7 @@ import fitbit
 import oauth2 as oauth
 import os
 import urllib2
-import autolog
+#import autolog
 
 day_converter = {
 	0: 'm',
