@@ -3,6 +3,7 @@ import fitbit
 import oauth2 as oauth
 import os
 import urllib2
+import autolog
 
 day_converter = {
 	0: 'm',
@@ -26,24 +27,34 @@ class fitbit_manager:
 		self.CONSUMER_SECRET = consumer_secret
 		self.IMG_LOC         = user_img_location
 		self.IMG_WEB_PREFIX  = user_img_web_prefix
+		self.fitbit_client   = (fitbit.Fitbit(self.CONSUMER_KEY, self.CONSUMER_SECRET).client)
+		self.client_user_hash= {}
 
+	def get_fitbit_user_client (self, key, secret):
+		if key in self.client_user_hash:
+		    return self.client_user_hash[key]
+		else :
+			oauth_fitbit = fitbit.Fitbit(self.CONSUMER_KEY,
+				                         self.CONSUMER_SECRET,
+				                         user_key=key,
+				                         user_secret=secret)
+			self.client_user_hash[key] = (oauth_fitbit)
+			return oauth_fitbit
 	# Start the process of connecting to fitbit
 	def get_auth_url (self, db, callback_url):
 		parameters = {'oauth_callback': callback_url}
-		oa = fitbit.Fitbit(self.CONSUMER_KEY, self.CONSUMER_SECRET)
-		req_token = oa.client.fetch_request_token(parameters=parameters)
+		req_token = fitbit_client.fetch_request_token(parameters=parameters)
 		db.store_oauth_secret(key=req_token.key, secret=req_token.secret)
-		fitbit_auth_url = oa.client.authorize_token_url(req_token)
+		fitbit_auth_url = fitbit_client.authorize_token_url(req_token)
 		return fitbit_auth_url
 
 	# After the user has approved this application to connect to their account
 	# run this to add the user to the database
 	def add_user (self, db, token, verifier, meta=None):
-		oa = fitbit.Fitbit(self.CONSUMER_KEY, self.CONSUMER_SECRET)
 		print "next token {0}".format(token)
 		secret = db.get_oauth_secret(token)
 		request_token = oauth.Token(token, secret)
-		user_token = oa.client.fetch_access_token(request_token, verifier)
+		user_token = fitbit_client.fetch_access_token(request_token, verifier)
 
 		u_info = self.get_user_fitbit_info(user_token.key, user_token.secret)
 		if 'encodedId' not in u_info:
@@ -60,10 +71,7 @@ class fitbit_manager:
 	# Get the user profile info from fitbit
 	def get_user_fitbit_info (self, key, secret):
 		try:
-			oauth_fitbit = fitbit.Fitbit(self.CONSUMER_KEY,
-				                         self.CONSUMER_SECRET,
-				                         user_key=key,
-				                         user_secret=secret)
+			oauth_fitbit = self.get_fitbit_user_client(key, secret)
 			res = oauth_fitbit.user_profile_get()['user']
 		except fitbit.exceptions.HTTPUnauthorized as e:
 			print "User keys invalid: {0} {1}".format(key, secret)
@@ -80,10 +88,7 @@ class fitbit_manager:
 			if fitbit_id != None and user['fitbit_id'] != fitbit_id:
 				continue
 			try:
-				oauth_fitbit = fitbit.Fitbit(self.CONSUMER_KEY,
-					                         self.CONSUMER_SECRET,
-					                         user_key=user['key'],
-					                         user_secret=user['secret'])
+				oauth_fitbit = self.get_fitbit_user_client(user['key'], user['secret'])
 				res = oauth_fitbit.time_series('activities/steps',
 					                       period='{0}d'.format(number_of_days))
 				userid = int(user['id'])
@@ -93,9 +98,9 @@ class fitbit_manager:
 
 					db.update_steps(userid, day, steps)
 			except fitbit.exceptions.HTTPUnauthorized as e:
-				print e
+				print "HTTPUnauthorized", e
 			except fitbit.exceptions.HTTPBadRequest as ex:
-				print ex
+				print "HTTPBadRequest", ex
 
 #			except ConnectionError as exc:
 #				print "Could not connect to fitbit"
