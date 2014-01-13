@@ -43,9 +43,9 @@ class fitbit_manager:
 	# Start the process of connecting to fitbit
 	def get_auth_url (self, db, callback_url):
 		parameters = {'oauth_callback': callback_url}
-		req_token = fitbit_client.fetch_request_token(parameters=parameters)
+		req_token = self.fitbit_client.fetch_request_token(parameters=parameters)
 		db.store_oauth_secret(key=req_token.key, secret=req_token.secret)
-		fitbit_auth_url = fitbit_client.authorize_token_url(req_token)
+		fitbit_auth_url = self.fitbit_client.authorize_token_url(req_token)
 		return fitbit_auth_url
 
 	# After the user has approved this application to connect to their account
@@ -54,7 +54,7 @@ class fitbit_manager:
 		print "next token {0}".format(token)
 		secret = db.get_oauth_secret(token)
 		request_token = oauth.Token(token, secret)
-		user_token = fitbit_client.fetch_access_token(request_token, verifier)
+		user_token = self.fitbit_client.fetch_access_token(request_token, verifier)
 
 		u_info = self.get_user_fitbit_info(user_token.key, user_token.secret)
 		if 'encodedId' not in u_info:
