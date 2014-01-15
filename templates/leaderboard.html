@@ -50,6 +50,8 @@ body{
 <div id="cse-leaderboard"></div>
 
 <script>
+var cacheData = false; //Cache to have a faster redraw on resize.
+
 var looper = false;
 function drawIt() {
 
@@ -286,14 +288,16 @@ function drawIt() {
   }
 
   //debugger;
-  getInfoAndRender();
+  getInfoAndRender(true);
   if(looper) clearInterval(looper);
-  // Run our leaderboard on a loop, updating every 10 seconds
-  looper = setInterval(getInfoAndRender, 10000)
+  // Run our leaderboard on a loop, updating every 30 seconds
+  looper = setInterval(getInfoAndRender, 30000)
 
   // Gets the data from the server, passes it to our D3 js
-  function getInfoAndRender() {
+  function getInfoAndRender(instant) {
+    if(cacheData && instant) updateLeaderBoard(cacheData);
     $.getJSON("{{ meta.root }}/group_info", function(data) {
+      cacheData = data;
       updateLeaderBoard(data);
     });
   }
