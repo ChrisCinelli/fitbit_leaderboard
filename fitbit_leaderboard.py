@@ -30,14 +30,16 @@ fm.cache_images(db=db)
 
 
 def update_fitbit ():
+	uffm = fitbit_manager.fitbit_manager(
+		consumer_key=app.config['CONSUMER_KEY'],
+		consumer_secret=app.config['CONSUMER_SECRET'],
+		user_img_location=app.config['USER_IMG_LOCATION'],
+		user_img_web_prefix=app.config['USER_IMG_WEB_PREFIX'])
+
 	while True:
 		print "Fitbit Online Update"
 		db = fitbit_db.fitbit_db(app.config['DATABASE'])
-		uffm = fitbit_manager.fitbit_manager(
-			consumer_key=app.config['CONSUMER_KEY'],
-			consumer_secret=app.config['CONSUMER_SECRET'],
-			user_img_location=app.config['USER_IMG_LOCATION'],
-			user_img_web_prefix=app.config['USER_IMG_WEB_PREFIX'])
+
 		uffm.update(db=db, number_of_days=7)
 
 		minutes = 60.0
