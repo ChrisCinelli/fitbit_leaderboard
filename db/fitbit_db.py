@@ -165,6 +165,24 @@ class fitbit_db:
 		week_data = ret.fetchall()
 		return week_data
 
+	# Get a week's worth of data from the database
+	def get_total_steps (self):
+		week = now_here-timedelta(days=7)
+
+		q = """SELECT um.user_id, um.display_name, sum(s.steps) AS steps, um.avatar
+		       FROM {0}users as u
+		       LEFT JOIN {0}steps as s
+		       ON u.id = s.user_id
+		       LEFT JOIN {0}user_meta as um
+		       ON u.id = um.user_id
+		       WHERE s.day>='2014-02-01'
+		       GROUP BY um.user_id
+		       ORDER BY sum(s.steps) DESC
+		""".format(TABLE_PREFIX)
+		ret = self.execute(q, ())
+		week_data = ret.fetchall()
+		return week_data		
+
 	# Returns a dict with all users' meta information
 	# {<user_id>: {'username':<uname>, ...}}
 	def get_users_meta (self):

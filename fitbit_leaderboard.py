@@ -119,10 +119,19 @@ def group_info():
 	data = fm.retrieve(db=g.db)
 	return json.dumps(data)
 
+@app.route('/total')
+def total():
+	data = fm.retrieve_tot_steps(db=g.db)
+	return json.dumps(data)
+
+@app.route("/totals")
+def totals():
+	data = fm.retrieve_tot_steps(db=g.db)
+	return render_template('totals.html', data=data, meta=g.meta)
+
 @app.route("/leaderboard")
 def leaderboard():
-	data = fm.retrieve(db=g.db)
-	return render_template('leaderboard.html', data=data, meta=g.meta)
+	return render_template('leaderboard.html', meta=g.meta)
 
 if __name__ == '__main__':
-	app.run(debug=True)
+	app.run(debug=True, host='0.0.0.0')

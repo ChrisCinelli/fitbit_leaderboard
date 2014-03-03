@@ -133,6 +133,17 @@ class fitbit_manager:
 
 
 	# Get a week's worth of data from the database with everyone's step counts.
+	def retrieve_tot_steps (self, db):
+		steps = db.get_total_steps()
+		data = []
+		for step in steps:
+			data.append({'label': step[1],
+			             'steps': step[2]
+			            })
+
+		return data
+
+	# Get a week's worth of data from the database with everyone's step counts.
 	def retrieve (self, db):
 		week_data = db.get_week()
 

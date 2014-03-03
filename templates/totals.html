@@ -1,0 +1,159 @@
+{% extends "layout.html" %}
+{% block content %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/nv.d3.min.css') }}">
+<style type="text/css">
+body{
+      font-family: sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.bar {
+  fill: steelblue;
+}
+
+.x-axis path {
+  display: none;
+}
+
+.x-axis text {
+    font-family: sans-serif;
+    font-size: 13px;
+}
+
+#leaderboard_title {
+  position: absolute;
+  top:5px;
+  left:50%;
+  min-width: 100px;
+  width: 30%;
+  border: 3px solid #699CC6;
+  background-color: #fff;
+  margin-left: -15%;
+  text-align: center;
+  color: #111;
+  height: 75px;
+  z-index: 1500;
+  font-size: 200%;
+  vertical-align: center;
+  padding-top: 25px;
+  /*border-radius: 15px;*/
+}
+
+
+</style>
+
+<div id="total-chart"></div>
+
+
+<script src="{{ url_for('static', filename='js/nv.d3.min.js') }}"></script>
+<script>
+var data = {{ data|tojson|safe }};
+
+
+function shortFormat(n){
+  if (n > 1000) {
+    return Math.round(n / 1000) + "K";
+  }  else {
+    return n;
+  }
+
+}
+
+
+function drawIt(){
+  var margin = {top: 30, right: 0, bottom: 40, left: 60}
+  var width = document.documentElement.clientWidth - margin.left - margin.right - 30
+  var height = document.documentElement.clientHeight - margin.top - margin.bottom - 90
+
+  // Set up d3 SVG
+  d3.select("#total-chart").selectAll("svg").remove();
+  var svg = d3.select("#total-chart").append("svg")
+    .attr("class", "leaderboard-svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+
+  nv.addGraph(function() {
+    var chart = nv.models.discreteBarChart()
+        .x(function(d) { return d.label })    //Specify the data accessors.
+        .y(function(d) { return d.steps })
+        .staggerLabels(true)    //Too many bars and not enough room? Try staggering labels.
+        .tooltips(false)        //Don't show tooltips
+        .showValues(true)       //...instead, show the bar value right on top of each bar.
+        .valueFormat(shortFormat)
+        .transitionDuration(350)
+        ;
+   
+    d3.select('#total-chart svg')
+        .datum([{key:"Totals", values: data}])
+        .call(chart);
+   
+    nv.utils.windowResize(chart.update);
+   
+    return chart;
+  });
+   
+  //Each bar represents a single discrete quantity.
+  function exampleData() {
+   return  [ 
+      {
+        key: "Cumulative Return",
+        values: [
+          { 
+            "label" : "A Label" ,
+            "value" : -29.765957771107
+          } , 
+          { 
+            "label" : "B Label" , 
+            "value" : 0
+          } , 
+          { 
+            "label" : "C Label" , 
+            "value" : 32.807804682612
+          } , 
+          { 
+            "label" : "D Label" , 
+            "value" : 196.45946739256
+          } , 
+          { 
+            "label" : "E Label" ,
+            "value" : 0.19434030906893
+          } , 
+          { 
+            "label" : "F Label" , 
+            "value" : -98.079782601442
+          } , 
+          { 
+            "label" : "G Label" , 
+            "value" : -13.925743130903
+          } , 
+          { 
+            "label" : "H Label" , 
+            "value" : -5.1387322875705
+          }
+        ]
+      }
+    ]
+   
+  }
+
+}
+
+drawIt()
+$(window).resize(drawIt);
+
+
+function numberWithCommas(x) {
+  return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+</script>
+
+{% endblock %}
